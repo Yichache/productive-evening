@@ -1,0 +1,9 @@
+{
+  "name": "Evening Portal",
+  "short_name": "Evening",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "description": "Your evening routine companion for reading, watching, and writing."
+}

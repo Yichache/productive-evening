@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="manifest.json">
+<title>Evening Portal</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --accent: #e94560;
+    --accent2: #533483;
+    --text: #eee;
+    --text-dim: #999;
+    --energy1: #e94560;
+    --energy2: #f5a623;
+    --energy3: #4ecdc4;
+    --read: #4ecdc4;
+    --watch: #f5a623;
+    --write: #e94560;
+    --radius: 12px;
+    --nav-height: 60px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    padding-bottom: calc(var(--nav-height) + 16px);
+    -webkit-font-smoothing: antialiased;
+  }
+  button {
+    font-family: inherit;
+    border: none;
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  button:active { transform: scale(0.97); }
+  input, textarea, select {
+    font-family: inherit;
+    font-size: 1rem;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--surface2);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    width: 100%;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    background: var(--surface);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid var(--surface2);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-btn {
+    background: none;
+    color: var(--text-dim);
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border-radius: 8px;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-icon { font-size: 1.3rem; }
+
+  /* Views */
+  .view { display: none; padding: 20px 16px; max-width: 500px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  /* Header */
+  .view-header {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding-top: 8px;
+  }
+  .view-sub {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .card-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  /* Chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .chip {
+    background: var(--surface2);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    border: 2px solid transparent;
+  }
+  .chip.selected {
+    border-color: var(--accent);
+    background: rgba(233, 69, 96, 0.15);
+  }
+
+  /* Energy selector */
+  .energy-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .energy-btn {
+    flex: 1;
+    padding: 14px 8px;
+    text-align: center;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 0.85rem;
+    border: 2px solid transparent;
+  }
+  .energy-btn.selected { border-color: currentColor; }
+  .energy-btn[data-energy="1"] { color: var(--energy1); }
+  .energy-btn[data-energy="1"].selected { background: rgba(233, 69, 96, 0.15); }
+  .energy-btn[data-energy="2"] { color: var(--energy2); }
+  .energy-btn[data-energy="2"].selected { background: rgba(245, 166, 35, 0.15); }
+  .energy-btn[data-energy="3"] { color: var(--energy3); }
+  .energy-btn[data-energy="3"].selected { background: rgba(78, 205, 196, 0.15); }
+
+  /* Primary button */
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 24px;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: default;
+    transform: none;
+  }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    padding: 12px 20px;
+    width: 100%;
+    font-weight: 500;
+  }
+  .btn-small {
+    background: var(--surface2);
+    color: var(--text);
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+  .btn-ghost {
+    background: none;
+    color: var(--text-dim);
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+  .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+  .btn-row > * { flex: 1; }
+
+  /* Suggestion card */
+  .suggestion {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    margin-bottom: 16px;
+    text-align: center;
+    border-left: 4px solid var(--accent);
+  }
+  .suggestion-category {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .suggestion-category.read { color: var(--read); }
+  .suggestion-category.watch { color: var(--watch); }
+  .suggestion-category.write { color: var(--write); }
+  .suggestion-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .suggestion-notes {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .suggestion-tier {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    justify-content: center;
+  }
+  .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--surface2);
+  }
+  .step-dot.active { background: var(--accent); }
+  .step-dot.done { background: var(--energy3); }
+
+  /* Completion screen */
+  .complete-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .complete-icon { font-size: 3rem; margin-bottom: 16px; }
+  .complete-msg {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .complete-sub {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  /* Cycles view */
+  .cycle-group-title {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 20px 0 10px;
+  }
+  .cycle-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .cycle-header {
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .cycle-header:active { background: var(--surface2); }
+  .cycle-title-row { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .cycle-status {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .cycle-status.open { background: rgba(245, 166, 35, 0.2); color: var(--energy2); }
+  .cycle-status.resolved { background: rgba(78, 205, 196, 0.2); color: var(--energy3); }
+  .cycle-status.active-exp { background: rgba(233, 69, 96, 0.2); color: var(--accent); }
+  .cycle-body { padding: 0 16px 16px; display: none; }
+  .cycle-body.open { display: block; }
+  .cycle-target {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border-radius: 8px;
+  }
+  .iteration {
+    border-left: 2px solid var(--surface2);
+    padding-left: 14px;
+    margin-bottom: 14px;
+  }
+  .iteration-num {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .iteration-field {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+  .iteration-field strong {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+  .chevron {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+  }
+  .cycle-header.expanded .chevron { transform: rotate(90deg); }
+
+  /* Patterns view */
+  .dot-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+  .dot-day {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: var(--surface2);
+    position: relative;
+  }
+  .dot-day.energy1 { background: var(--energy1); }
+  .dot-day.energy2 { background: var(--energy2); }
+  .dot-day.energy3 { background: var(--energy3); }
+  .dot-day.today { outline: 2px solid var(--text); outline-offset: 1px; }
+  .dot-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--surface2);
+    font-size: 0.9rem;
+  }
+  .stat-value { font-weight: 600; }
+  .stat-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .stat-bar-label {
+    font-size: 0.8rem;
+    width: 60px;
+    color: var(--text-dim);
+  }
+  .stat-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  .stat-bar-count {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    width: 24px;
+    text-align: right;
+  }
+  .correlation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--surface);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+  }
+  .correlation-avg {
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+  }
+
+  /* Weekly review */
+  .review-step {
+    display: none;
+    animation: fadeIn 0.2s;
+  }
+  .review-step.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Add form modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80dvh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .checkbox-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .checkbox-row label {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  /* AI insights */
+  .ai-result {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 16px;
+    border-left: 4px solid var(--accent2);
+    line-height: 1.6;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+  }
+  .ai-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-dim);
+  }
+
+  /* Settings row */
+  .settings-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .settings-row button { font-size: 0.8rem; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+  }
+  .empty-state-icon { font-size: 2rem; margin-bottom: 12px; }
+
+  /* Hide scrollbar on iOS */
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ===== TONIGHT VIEW ===== -->
+<div id="view-tonight" class="view active">
+  <div class="view-header">Tonight</div>
+
+  <!-- Step dots -->
+  <div class="steps" id="tonight-steps">
+    <div class="step-dot" data-step="0"></div>
+    <div class="step-dot" data-step="1"></div>
+    <div class="step-dot" data-step="2"></div>
+    <div class="step-dot" data-step="3"></div>
+  </div>
+
+  <!-- Step 0: Pre-evening context -->
+  <div id="step-context" class="tonight-step">
+    <div class="card">
+      <div class="card-title">How was your day?</div>
+      <div class="card-label">Day tags</div>
+      <div class="chips" id="day-tags">
+        <div class="chip" data-tag="long work day">long work day</div>
+        <div class="chip" data-tag="light day">light day</div>
+        <div class="chip" data-tag="gym">gym</div>
+        <div class="chip" data-tag="bad commute">bad commute</div>
+        <div class="chip" data-tag="good sleep">good sleep</div>
+        <div class="chip" data-tag="poor sleep">poor sleep</div>
+        <div class="chip" data-tag="social day">social day</div>
+      </div>
+      <input type="text" id="custom-tag" placeholder="Add custom tag..." style="margin-bottom:12px">
+    </div>
+
+    <div class="card">
+      <div class="card-title">Energy level right now?</div>
+      <div class="energy-row">
+        <button class="energy-btn" data-energy="1">1<br><small>Empty</small></button>
+        <button class="energy-btn" data-energy="2">2<br><small>Okay</small></button>
+        <button class="energy-btn" data-energy="3">3<br><small>Good</small></button>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-context-next" disabled>Next</button>
+  </div>
+
+  <!-- Step 1: Experiment check -->
+  <div id="step-experiment" class="tonight-step" style="display:none">
+    <div class="card">
+      <div class="card-title">Experiment check-in</div>
+      <div id="experiment-prompts"></div>
+    </div>
+    <button class="btn-primary" id="btn-experiment-next">Next</button>
+  </div>
+
+  <!-- Step 2: Activity suggestion -->
+  <div id="step-activity" class="tonight-step" style="display:none">
+    <div class="card-label" style="text-align:center;margin-bottom:12px">Tonight's suggestion</div>
+    <div id="suggestion-container"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="btn-skip">Skip</button>
+      <button class="btn-primary" id="btn-accept" style="flex:2">Let's do this</button>
+    </div>
+    <button class="btn-ghost" id="btn-pick-own" style="width:100%;margin-top:8px">I'll pick my own</button>
+    <div id="own-activity-form" style="display:none;margin-top:12px">
+      <input type="text" id="own-activity" placeholder="What will you do tonight?">
+      <button class="btn-primary" id="btn-own-go" style="margin-top:8px">Go</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Quick log -->
+  <div id="step-log" class="tonight-step" style="display:none">
+    <div class="card">
+      <div class="card-title">Quick log</div>
+      <div class="form-group">
+        <label class="form-label">What did you do?</label>
+        <input type="text" id="log-activity" placeholder="e.g., Read chapter 3 of...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">What struck you?</label>
+        <textarea id="log-reflection" placeholder="One or two sentences..."></textarea>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-complete">Complete evening</button>
+  </div>
+
+  <!-- Complete screen -->
+  <div id="step-complete" class="tonight-step" style="display:none">
+    <div class="complete-screen">
+      <div class="complete-icon">&#10024;</div>
+      <div class="complete-msg">Evening logged</div>
+      <div class="complete-sub" id="complete-summary"></div>
+      <button class="btn-secondary" id="btn-new-cycle" style="margin-top:24px">Start a Kolb's cycle from tonight</button>
+    </div>
+  </div>
+
+  <!-- Already completed today -->
+  <div id="step-already-done" class="tonight-step" style="display:none">
+    <div class="complete-screen">
+      <div class="complete-icon">&#9996;</div>
+      <div class="complete-msg">Tonight is logged</div>
+      <div class="complete-sub">You've already completed your evening routine today. Enjoy the rest of your night.</div>
+      <button class="btn-ghost" id="btn-redo" style="margin-top:16px">Log another session</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CYCLES VIEW ===== -->
+<div id="view-cycles" class="view">
+  <div class="view-header">Cycles</div>
+  <div class="view-sub">Track specific problems through iterative Kolb's cycles until resolved.</div>
+
+  <div id="cycles-list"></div>
+
+  <button class="btn-primary" id="btn-add-cycle" style="margin-top:12px">New cycle</button>
+</div>
+
+<!-- ===== PATTERNS VIEW ===== -->
+<div id="view-patterns" class="view">
+  <div class="view-header">Patterns</div>
+
+  <div class="card">
+    <div class="card-title">Last 28 days</div>
+    <div class="dot-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="dot-calendar" id="dot-calendar"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Activities</div>
+    <div id="activity-bars"></div>
+    <div class="empty-state" id="activity-empty" style="display:none;padding:12px">
+      <div style="font-size:0.85rem">No data yet. Complete a few evenings to see patterns.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tag &harr; Energy</div>
+    <div id="correlation-list"></div>
+    <div class="empty-state" id="correlation-empty" style="display:none;padding:12px">
+      <div style="font-size:0.85rem">Log a few evenings with day tags to see correlations.</div>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="btn-weekly-review">Weekly review</button>
+
+  <button class="btn-secondary" id="btn-ai-insights" style="margin-top:10px">Get AI insights</button>
+  <div id="ai-result-area"></div>
+
+  <div class="settings-row">
+    <button class="btn-small" id="btn-export">Export data</button>
+    <button class="btn-small" id="btn-import">Import data</button>
+    <button class="btn-small" id="btn-add-content">Add to queue</button>
+  </div>
+  <input type="file" id="import-file" accept=".json" style="display:none">
+</div>
+
+<!-- ===== WEEKLY REVIEW OVERLAY ===== -->
+<div class="modal-overlay" id="review-overlay">
+  <div class="modal">
+    <div class="modal-title">Weekly review</div>
+
+    <!-- Review Step 1: Active cycles -->
+    <div class="review-step active" data-rstep="0">
+      <div class="card-label">Active experiments this week</div>
+      <div id="review-active-cycles"></div>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin:12px 0">Record results for any experiments you ran this week.</p>
+      <button class="btn-primary review-next">Next</button>
+    </div>
+
+    <!-- Review Step 2: Patterns -->
+    <div class="review-step" data-rstep="1">
+      <div class="card-label">Patterns from this week</div>
+      <div id="review-patterns-summary"></div>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin:12px 0">Any new problems or observations you want to track?</p>
+      <textarea id="review-new-observations" placeholder="Optional: note any patterns..."></textarea>
+      <button class="btn-primary review-next" style="margin-top:12px">Next</button>
+    </div>
+
+    <!-- Review Step 3: Prioritize -->
+    <div class="review-step" data-rstep="2">
+      <div class="card-label">Priorities for next week</div>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:12px">Pick 1-2 experiments to focus on. Remember: or, not and.</p>
+      <div id="review-priorities"></div>
+      <button class="btn-primary" id="btn-finish-review" style="margin-top:12px">Finish review</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD CONTENT MODAL ===== -->
+<div class="modal-overlay" id="content-modal">
+  <div class="modal">
+    <div class="modal-title">Add to queue</div>
+    <div class="form-group">
+      <label class="form-label">Title</label>
+      <input type="text" id="content-title" placeholder="Book title, film name, or writing prompt...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <div class="chips" id="content-category">
+        <div class="chip" data-cat="read">Read</div>
+        <div class="chip" data-cat="watch">Watch</div>
+        <div class="chip" data-cat="write">Write</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Good for energy levels</label>
+      <div class="chips" id="content-energy">
+        <div class="chip selected" data-elv="1">1 - Empty</div>
+        <div class="chip selected" data-elv="2">2 - Okay</div>
+        <div class="chip selected" data-elv="3">3 - Good</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes (optional)</label>
+      <input type="text" id="content-notes" placeholder="e.g., Recommended by...">
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="btn-cancel-content">Cancel</button>
+      <button class="btn-primary" id="btn-save-content">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NEW CYCLE MODAL ===== -->
+<div class="modal-overlay" id="cycle-modal">
+  <div class="modal">
+    <div class="modal-title">New Kolb's cycle</div>
+    <div class="form-group">
+      <label class="form-label">What problem or area do you want to improve?</label>
+      <input type="text" id="cycle-title" placeholder="e.g., Phone distraction while reading">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <div class="chips" id="cycle-category">
+        <div class="chip" data-ccat="pre-evening">Pre-evening</div>
+        <div class="chip" data-ccat="routine">Routine</div>
+        <div class="chip" data-ccat="activity">Activity</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Target: how will you know it's solved?</label>
+      <input type="text" id="cycle-target" placeholder="e.g., Can read 30 min without breaking focus">
+    </div>
+    <div class="card-label" style="margin-top:16px;margin-bottom:12px">First Kolb's iteration</div>
+    <div class="form-group">
+      <label class="form-label">Experience: what happened?</label>
+      <textarea id="cycle-experience" placeholder="Describe the situation..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reflection: what went well or poorly?</label>
+      <textarea id="cycle-reflection" placeholder="How did it feel? What did you notice?"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Abstraction: what pattern does this reveal?</label>
+      <textarea id="cycle-abstraction" placeholder="What habit or belief is behind this?"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Experiment: what will you try next time?</label>
+      <textarea id="cycle-experiment" placeholder="One specific, small change..."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="btn-cancel-cycle">Cancel</button>
+      <button class="btn-primary" id="btn-save-cycle">Save cycle</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD ITERATION MODAL ===== -->
+<div class="modal-overlay" id="iteration-modal">
+  <div class="modal">
+    <div class="modal-title">New iteration</div>
+    <div id="iteration-cycle-name" style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px"></div>
+    <div class="form-group">
+      <label class="form-label">Experience: what happened with the experiment?</label>
+      <textarea id="iter-experience"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reflection: what went well or poorly?</label>
+      <textarea id="iter-reflection"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Abstraction: what pattern does this reveal?</label>
+      <textarea id="iter-abstraction"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Experiment: what will you try next?</label>
+      <textarea id="iter-experiment"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="btn-cancel-iteration">Cancel</button>
+      <button class="btn-primary" id="btn-save-iteration">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FIRST-TIME SETUP ===== -->
+<div class="modal-overlay" id="setup-overlay">
+  <div class="modal">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:2rem;margin-bottom:8px">&#127769;</div>
+      <div class="modal-title" style="margin-bottom:4px">Welcome to Evening Portal</div>
+      <p style="color:var(--text-dim);font-size:0.9rem;line-height:1.5">Your space for reading, watching, and writing. Let's set up your content queue.</p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Load starter content?</label>
+      <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:10px">We have a few seed items to get you started. You can add your own anytime.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="btn-setup-skip">Start empty</button>
+      <button class="btn-primary" id="btn-setup-load">Load starter content</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AI SETTINGS MODAL ===== -->
+<div class="modal-overlay" id="ai-settings-modal">
+  <div class="modal">
+    <div class="modal-title">AI Insights Setup</div>
+    <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px;line-height:1.5">
+      Enter your Cloudflare Worker URL to enable AI-powered pattern analysis.
+      See the README for setup instructions.
+    </p>
+    <div class="form-group">
+      <label class="form-label">Worker URL</label>
+      <input type="url" id="ai-worker-url" placeholder="https://your-worker.workers.dev">
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="btn-cancel-ai">Cancel</button>
+      <button class="btn-primary" id="btn-save-ai">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="nav">
+  <button class="nav-btn active" data-view="tonight">
+    <span class="nav-icon">&#9790;</span>
+    <span>Tonight</span>
+  </button>
+  <button class="nav-btn" data-view="cycles">
+    <span class="nav-icon">&#8635;</span>
+    <span>Cycles</span>
+  </button>
+  <button class="nav-btn" data-view="patterns">
+    <span class="nav-icon">&#9632;</span>
+    <span>Patterns</span>
+  </button>
+</nav>
+
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
+const DB = {
+  _get(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+    catch { return fallback; }
+  },
+  _set(key, val) { localStorage.setItem(key, JSON.stringify(val)); },
+
+  // Daily logs
+  getLogs()  { return this._get('logs', []); },
+  saveLogs(logs) { this._set('logs', logs); },
+  addLog(log) {
+    const logs = this.getLogs();
+    logs.push({ ...log, date: new Date().toISOString().slice(0,10) });
+    this.saveLogs(logs);
+  },
+  getTodayLog() {
+    const today = new Date().toISOString().slice(0,10);
+    return this.getLogs().find(l => l.date === today);
+  },
+
+  // Content queue
+  getContent() { return this._get('content', []); },
+  saveContent(c) { this._set('content', c); },
+  addContent(item) {
+    const content = this.getContent();
+    item.id = 'c-' + Date.now();
+    item.status = 'queued';
+    content.push(item);
+    this.saveContent(content);
+  },
+
+  // Kolb's cycles
+  getCycles()  { return this._get('cycles', []); },
+  saveCycles(c) { this._set('cycles', c); },
+  addCycle(cycle) {
+    const cycles = this.getCycles();
+    cycle.id = 'k-' + Date.now();
+    cycle.status = 'open';
+    cycle.createdDate = new Date().toISOString().slice(0,10);
+    cycle.resolvedDate = null;
+    cycles.push(cycle);
+    this.saveCycles(cycles);
+    return cycle;
+  },
+  getActiveCycles() {
+    return this.getCycles().filter(c => c.status === 'open' && c.activeExperiment);
+  },
+
+  // Settings
+  getSettings() { return this._get('settings', {}); },
+  saveSetting(key, val) {
+    const s = this.getSettings();
+    s[key] = val;
+    this._set('settings', s);
+  },
+
+  // Export all
+  exportAll() {
+    return JSON.stringify({
+      logs: this.getLogs(),
+      content: this.getContent(),
+      cycles: this.getCycles(),
+      settings: this.getSettings()
+    }, null, 2);
+  },
+  importAll(json) {
+    const data = JSON.parse(json);
+    if (data.logs) this.saveLogs(data.logs);
+    if (data.content) this.saveContent(data.content);
+    if (data.cycles) this.saveCycles(data.cycles);
+    if (data.settings) this._set('settings', data.settings);
+  },
+
+  isSetupDone() { return this._get('setupDone', false); },
+  markSetupDone() { this._set('setupDone', true); }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let tonightState = {
+  step: 0,
+  tags: [],
+  energy: null,
+  experimentResults: {},
+  suggestion: null,
+  activity: '',
+  customActivity: false
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const view = btn.dataset.view;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    if (view === 'cycles') renderCycles();
+    if (view === 'patterns') renderPatterns();
+  });
+});
+
+// ============================================================
+// TONIGHT VIEW
+// ============================================================
+function initTonight() {
+  const todayLog = DB.getTodayLog();
+  if (todayLog) {
+    showTonightStep('step-already-done');
+    updateStepDots(-1);
+    return;
+  }
+  showTonightStep('step-context');
+  updateStepDots(0);
+}
+
+function showTonightStep(id) {
+  document.querySelectorAll('.tonight-step').forEach(s => s.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+
+function updateStepDots(current) {
+  document.querySelectorAll('#tonight-steps .step-dot').forEach((d, i) => {
+    d.className = 'step-dot';
+    if (i < current) d.classList.add('done');
+    if (i === current) d.classList.add('active');
+  });
+}
+
+// Day tags
+document.getElementById('day-tags').addEventListener('click', e => {
+  if (e.target.classList.contains('chip')) {
+    e.target.classList.toggle('selected');
+    updateTonightTags();
+  }
+});
+document.getElementById('custom-tag').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.value.trim()) {
+    const tag = e.target.value.trim().toLowerCase();
+    const chip = document.createElement('div');
+    chip.className = 'chip selected';
+    chip.dataset.tag = tag;
+    chip.textContent = tag;
+    chip.addEventListener('click', () => { chip.classList.toggle('selected'); updateTonightTags(); });
+    document.getElementById('day-tags').appendChild(chip);
+    e.target.value = '';
+    updateTonightTags();
+  }
+});
+function updateTonightTags() {
+  tonightState.tags = [...document.querySelectorAll('#day-tags .chip.selected')].map(c => c.dataset.tag);
+  checkContextReady();
+}
+
+// Energy
+document.querySelectorAll('.energy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    tonightState.energy = parseInt(btn.dataset.energy);
+    checkContextReady();
+  });
+});
+
+function checkContextReady() {
+  document.getElementById('btn-context-next').disabled = !tonightState.energy;
+}
+
+// Context next
+document.getElementById('btn-context-next').addEventListener('click', () => {
+  const active = DB.getActiveCycles();
+  if (active.length > 0) {
+    renderExperimentCheck(active);
+    showTonightStep('step-experiment');
+    updateStepDots(1);
+  } else {
+    showSuggestion();
+    showTonightStep('step-activity');
+    updateStepDots(2);
+  }
+});
+
+// Experiment check
+function renderExperimentCheck(activeCycles) {
+  const container = document.getElementById('experiment-prompts');
+  container.innerHTML = '';
+  activeCycles.forEach(cycle => {
+    const lastIter = cycle.iterations[cycle.iterations.length - 1];
+    const div = document.createElement('div');
+    div.style.marginBottom = '16px';
+    div.innerHTML = `
+      <p style="font-size:0.9rem;margin-bottom:8px"><strong>${cycle.title}</strong></p>
+      <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:10px">You said you'd try: "${lastIter.experiment}"</p>
+      <div class="chips" style="margin-bottom:8px">
+        <div class="chip exp-yn" data-cid="${cycle.id}" data-val="yes">Yes, I tried it</div>
+        <div class="chip exp-yn" data-cid="${cycle.id}" data-val="no">No / N/A</div>
+      </div>
+      <textarea class="exp-note" data-cid="${cycle.id}" placeholder="How did it go? (optional)" style="display:none"></textarea>
+    `;
+    container.appendChild(div);
+  });
+  container.querySelectorAll('.exp-yn').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const siblings = container.querySelectorAll(`.exp-yn[data-cid="${chip.dataset.cid}"]`);
+      siblings.forEach(s => s.classList.remove('selected'));
+      chip.classList.add('selected');
+      const note = container.querySelector(`.exp-note[data-cid="${chip.dataset.cid}"]`);
+      note.style.display = chip.dataset.val === 'yes' ? 'block' : 'none';
+      tonightState.experimentResults[chip.dataset.cid] = { tried: chip.dataset.val === 'yes' };
+    });
+  });
+}
+
+document.getElementById('btn-experiment-next').addEventListener('click', () => {
+  // Save experiment notes
+  document.querySelectorAll('.exp-note').forEach(ta => {
+    const cid = ta.dataset.cid;
+    if (tonightState.experimentResults[cid]) {
+      tonightState.experimentResults[cid].note = ta.value;
+    }
+  });
+  // Update cycles with results
+  const cycles = DB.getCycles();
+  Object.entries(tonightState.experimentResults).forEach(([cid, result]) => {
+    const cycle = cycles.find(c => c.id === cid);
+    if (cycle && result.tried) {
+      const lastIter = cycle.iterations[cycle.iterations.length - 1];
+      lastIter.result = result.note || 'Tried - no notes';
+    }
+  });
+  DB.saveCycles(cycles);
+
+  showSuggestion();
+  showTonightStep('step-activity');
+  updateStepDots(2);
+});
+
+// Activity suggestion
+function showSuggestion() {
+  const energy = tonightState.energy;
+  const content = DB.getContent().filter(c => c.status === 'queued' && c.energy_levels.includes(energy));
+  const container = document.getElementById('suggestion-container');
+
+  if (content.length === 0) {
+    container.innerHTML = `
+      <div class="suggestion">
+        <div class="suggestion-title">No items in your queue for this energy level</div>
+        <div class="suggestion-notes">Try adding some content, or pick your own activity below.</div>
+      </div>`;
+    tonightState.suggestion = null;
+    return;
+  }
+
+  const item = content[Math.floor(Math.random() * content.length)];
+  tonightState.suggestion = item;
+
+  const tierText = {
+    read: { 1: 'Just read a page or two', 2: 'A chapter or ~20 min', 3: 'Extended session' },
+    watch: { 1: 'Short film or a single scene', 2: 'A full film', 3: 'Film + written notes' },
+    write: { 1: 'Just 3 sentences', 2: 'A short paragraph', 3: 'A longer piece or essay' }
+  };
+
+  container.innerHTML = `
+    <div class="suggestion" style="border-left-color: var(--${item.category})">
+      <div class="suggestion-category ${item.category}">${item.category}</div>
+      <div class="suggestion-title">${item.title}</div>
+      ${item.notes ? `<div class="suggestion-notes">${item.notes}</div>` : ''}
+      <div class="suggestion-tier">${tierText[item.category]?.[energy] || ''}</div>
+    </div>`;
+}
+
+document.getElementById('btn-skip').addEventListener('click', showSuggestion);
+
+document.getElementById('btn-accept').addEventListener('click', () => {
+  if (tonightState.suggestion) {
+    document.getElementById('log-activity').value = tonightState.suggestion.title;
+  }
+  tonightState.customActivity = false;
+  showTonightStep('step-log');
+  updateStepDots(3);
+});
+
+document.getElementById('btn-pick-own').addEventListener('click', () => {
+  document.getElementById('own-activity-form').style.display = 'block';
+});
+
+document.getElementById('btn-own-go').addEventListener('click', () => {
+  const val = document.getElementById('own-activity').value.trim();
+  if (val) {
+    document.getElementById('log-activity').value = val;
+    tonightState.customActivity = true;
+    showTonightStep('step-log');
+    updateStepDots(3);
+  }
+});
+
+// Complete
+document.getElementById('btn-complete').addEventListener('click', () => {
+  const activity = document.getElementById('log-activity').value.trim();
+  const reflection = document.getElementById('log-reflection').value.trim();
+
+  const log = {
+    tags: tonightState.tags,
+    energy: tonightState.energy,
+    activity: activity || '(no activity logged)',
+    reflection: reflection || '',
+    suggestion: tonightState.suggestion ? tonightState.suggestion.id : null,
+    experimentResults: tonightState.experimentResults
+  };
+  DB.addLog(log);
+
+  // Mark suggestion as completed if used
+  if (tonightState.suggestion && !tonightState.customActivity) {
+    const content = DB.getContent();
+    const item = content.find(c => c.id === tonightState.suggestion.id);
+    if (item) item.status = 'completed';
+    DB.saveContent(content);
+  }
+
+  document.getElementById('complete-summary').textContent =
+    `Energy: ${tonightState.energy}/3 | ${activity}`;
+
+  showTonightStep('step-complete');
+  updateStepDots(4);
+});
+
+// Start new cycle from tonight
+document.getElementById('btn-new-cycle').addEventListener('click', () => {
+  document.getElementById('cycle-modal').classList.add('open');
+});
+
+// Redo
+document.getElementById('btn-redo').addEventListener('click', () => {
+  tonightState = { step: 0, tags: [], energy: null, experimentResults: {}, suggestion: null, activity: '', customActivity: false };
+  document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#day-tags .chip').forEach(c => c.classList.remove('selected'));
+  showTonightStep('step-context');
+  updateStepDots(0);
+});
+
+// ============================================================
+// CYCLES VIEW
+// ============================================================
+function renderCycles() {
+  const cycles = DB.getCycles();
+  const container = document.getElementById('cycles-list');
+
+  if (cycles.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">&#8635;</div>
+        <p>No cycles yet.</p>
+        <p style="font-size:0.85rem;margin-top:8px">When you notice a recurring problem during your evening routine, start a Kolb's cycle to systematically improve it.</p>
+      </div>`;
+    return;
+  }
+
+  const groups = { 'pre-evening': [], 'routine': [], 'activity': [] };
+  cycles.forEach(c => {
+    const g = groups[c.category] || groups['routine'];
+    g.push(c);
+  });
+
+  let html = '';
+  for (const [group, items] of Object.entries(groups)) {
+    if (items.length === 0) continue;
+    html += `<div class="cycle-group-title">${group}</div>`;
+    items.forEach(cycle => {
+      const activeCount = DB.getActiveCycles().length;
+      const isActive = cycle.activeExperiment;
+      const lastIter = cycle.iterations[cycle.iterations.length - 1];
+      const statusLabel = cycle.status === 'resolved' ? 'resolved' :
+        isActive ? 'active-exp' : 'open';
+      const statusText = cycle.status === 'resolved' ? 'Resolved' :
+        isActive ? 'Active experiment' : 'Open';
+
+      html += `
+        <div class="cycle-card" data-cid="${cycle.id}">
+          <div class="cycle-header" onclick="toggleCycle('${cycle.id}')">
+            <div class="cycle-title-row">
+              <span>${cycle.title}</span>
+              <span class="cycle-status ${statusLabel}">${statusText}</span>
+            </div>
+            <span class="chevron">&#9654;</span>
+          </div>
+          <div class="cycle-body" id="cbody-${cycle.id}">
+            <div class="cycle-target">Target: ${cycle.target}</div>
+            ${cycle.iterations.map((iter, i) => `
+              <div class="iteration">
+                <div class="iteration-num">Iteration ${i + 1}${iter.result ? ' &#10003;' : ''}</div>
+                <div class="iteration-field"><strong>Experience:</strong> ${iter.experience}</div>
+                <div class="iteration-field"><strong>Reflection:</strong> ${iter.reflection}</div>
+                <div class="iteration-field"><strong>Abstraction:</strong> ${iter.abstraction}</div>
+                <div class="iteration-field"><strong>Experiment:</strong> ${iter.experiment}</div>
+                ${iter.result ? `<div class="iteration-field"><strong>Result:</strong> ${iter.result}</div>` : ''}
+              </div>
+            `).join('')}
+            <div class="btn-row" style="flex-wrap:wrap">
+              ${cycle.status === 'open' ? `
+                <button class="btn-small" onclick="addIteration('${cycle.id}')">New iteration</button>
+                ${!isActive && activeCount < 2 ?
+                  `<button class="btn-small" onclick="activateExperiment('${cycle.id}')" style="background:rgba(233,69,96,0.2);color:var(--accent)">Activate experiment</button>` :
+                  isActive ?
+                  `<button class="btn-small" onclick="deactivateExperiment('${cycle.id}')">Deactivate</button>` : ''
+                }
+                <button class="btn-small" onclick="resolveCycle('${cycle.id}')" style="background:rgba(78,205,196,0.2);color:var(--energy3)">Mark resolved</button>
+              ` : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+  container.innerHTML = html;
+}
+
+function toggleCycle(id) {
+  const body = document.getElementById('cbody-' + id);
+  const header = body.previousElementSibling;
+  body.classList.toggle('open');
+  header.classList.toggle('expanded');
+}
+
+function activateExperiment(id) {
+  const cycles = DB.getCycles();
+  const cycle = cycles.find(c => c.id === id);
+  if (cycle) { cycle.activeExperiment = true; DB.saveCycles(cycles); renderCycles(); }
+}
+
+function deactivateExperiment(id) {
+  const cycles = DB.getCycles();
+  const cycle = cycles.find(c => c.id === id);
+  if (cycle) { cycle.activeExperiment = false; DB.saveCycles(cycles); renderCycles(); }
+}
+
+function resolveCycle(id) {
+  const cycles = DB.getCycles();
+  const cycle = cycles.find(c => c.id === id);
+  if (cycle) {
+    cycle.status = 'resolved';
+    cycle.activeExperiment = false;
+    cycle.resolvedDate = new Date().toISOString().slice(0, 10);
+    DB.saveCycles(cycles);
+    renderCycles();
+  }
+}
+
+function addIteration(id) {
+  document.getElementById('iteration-modal').classList.add('open');
+  const cycle = DB.getCycles().find(c => c.id === id);
+  document.getElementById('iteration-cycle-name').textContent = cycle.title;
+  document.getElementById('iteration-modal').dataset.cid = id;
+  ['iter-experience','iter-reflection','iter-abstraction','iter-experiment'].forEach(
+    id => document.getElementById(id).value = ''
+  );
+}
+
+// New cycle modal
+document.getElementById('btn-add-cycle').addEventListener('click', () => {
+  document.getElementById('cycle-modal').classList.add('open');
+});
+document.getElementById('btn-cancel-cycle').addEventListener('click', () => {
+  document.getElementById('cycle-modal').classList.remove('open');
+});
+
+document.getElementById('btn-save-cycle').addEventListener('click', () => {
+  const title = document.getElementById('cycle-title').value.trim();
+  const target = document.getElementById('cycle-target').value.trim();
+  const catChip = document.querySelector('#cycle-category .chip.selected');
+  const category = catChip ? catChip.dataset.ccat : 'routine';
+
+  if (!title || !target) return;
+
+  const cycle = {
+    title, category, target,
+    activeExperiment: false,
+    iterations: [{
+      experience: document.getElementById('cycle-experience').value.trim(),
+      reflection: document.getElementById('cycle-reflection').value.trim(),
+      abstraction: document.getElementById('cycle-abstraction').value.trim(),
+      experiment: document.getElementById('cycle-experiment').value.trim(),
+      result: null
+    }]
+  };
+  DB.addCycle(cycle);
+  document.getElementById('cycle-modal').classList.remove('open');
+  // Clear form
+  ['cycle-title','cycle-target','cycle-experience','cycle-reflection','cycle-abstraction','cycle-experiment'].forEach(
+    id => document.getElementById(id).value = ''
+  );
+  document.querySelectorAll('#cycle-category .chip').forEach(c => c.classList.remove('selected'));
+  renderCycles();
+});
+
+// Category chip selection (single-select)
+document.querySelectorAll('#cycle-category .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#cycle-category .chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+  });
+});
+
+// Save iteration
+document.getElementById('btn-cancel-iteration').addEventListener('click', () => {
+  document.getElementById('iteration-modal').classList.remove('open');
+});
+document.getElementById('btn-save-iteration').addEventListener('click', () => {
+  const cid = document.getElementById('iteration-modal').dataset.cid;
+  const cycles = DB.getCycles();
+  const cycle = cycles.find(c => c.id === cid);
+  if (!cycle) return;
+
+  cycle.iterations.push({
+    experience: document.getElementById('iter-experience').value.trim(),
+    reflection: document.getElementById('iter-reflection').value.trim(),
+    abstraction: document.getElementById('iter-abstraction').value.trim(),
+    experiment: document.getElementById('iter-experiment').value.trim(),
+    result: null
+  });
+  DB.saveCycles(cycles);
+  document.getElementById('iteration-modal').classList.remove('open');
+  renderCycles();
+});
+
+// ============================================================
+// PATTERNS VIEW
+// ============================================================
+function renderPatterns() {
+  renderDotCalendar();
+  renderActivityBars();
+  renderCorrelations();
+}
+
+function renderDotCalendar() {
+  const logs = DB.getLogs();
+  const cal = document.getElementById('dot-calendar');
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+
+  // Build 28-day grid aligned to start on Monday
+  const days = [];
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - 27);
+  // Align to Monday
+  const dayOfWeek = startDate.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  startDate.setDate(startDate.getDate() + mondayOffset);
+
+  const totalDays = Math.ceil((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+  for (let i = 0; i < Math.max(totalDays, 28); i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+
+  cal.innerHTML = days.map(d => {
+    const log = logs.find(l => l.date === d);
+    const cls = log ? `energy${log.energy}` : '';
+    const isToday = d === todayStr ? 'today' : '';
+    return `<div class="dot-day ${cls} ${isToday}" title="${d}"></div>`;
+  }).join('');
+}
+
+function renderActivityBars() {
+  const logs = DB.getLogs();
+  const container = document.getElementById('activity-bars');
+  const emptyEl = document.getElementById('activity-empty');
+
+  if (logs.length === 0) {
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  const counts = { read: 0, watch: 0, write: 0 };
+  const content = DB.getContent();
+  logs.forEach(log => {
+    if (log.suggestion) {
+      const item = content.find(c => c.id === log.suggestion);
+      if (item) counts[item.category]++;
+    } else {
+      // Try to guess category from activity text
+      const a = (log.activity || '').toLowerCase();
+      if (a.includes('read') || a.includes('book') || a.includes('chapter')) counts.read++;
+      else if (a.includes('watch') || a.includes('film') || a.includes('movie')) counts.watch++;
+      else if (a.includes('writ') || a.includes('wrote')) counts.write++;
+    }
+  });
+
+  const max = Math.max(...Object.values(counts), 1);
+  const colors = { read: 'var(--read)', watch: 'var(--watch)', write: 'var(--write)' };
+
+  container.innerHTML = Object.entries(counts).map(([cat, count]) => `
+    <div class="stat-bar-container">
+      <div class="stat-bar-label">${cat}</div>
+      <div class="stat-bar">
+        <div class="stat-bar-fill" style="width:${(count/max)*100}%;background:${colors[cat]}"></div>
+      </div>
+      <div class="stat-bar-count">${count}</div>
+    </div>
+  `).join('');
+}
+
+function renderCorrelations() {
+  const logs = DB.getLogs();
+  const container = document.getElementById('correlation-list');
+  const emptyEl = document.getElementById('correlation-empty');
+
+  if (logs.length < 3) {
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  // Compute average energy per tag
+  const tagData = {};
+  logs.forEach(log => {
+    (log.tags || []).forEach(tag => {
+      if (!tagData[tag]) tagData[tag] = { sum: 0, count: 0 };
+      tagData[tag].sum += log.energy;
+      tagData[tag].count++;
+    });
+  });
+
+  const sorted = Object.entries(tagData)
+    .map(([tag, d]) => ({ tag, avg: d.sum / d.count, count: d.count }))
+    .filter(d => d.count >= 2)
+    .sort((a, b) => b.avg - a.avg);
+
+  if (sorted.length === 0) {
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+
+  const colorForAvg = avg => avg >= 2.5 ? 'var(--energy3)' : avg >= 1.5 ? 'var(--energy2)' : 'var(--energy1)';
+
+  container.innerHTML = sorted.map(d => `
+    <div class="correlation-item">
+      <span>${d.tag} <span style="color:var(--text-dim);font-size:0.75rem">(${d.count}x)</span></span>
+      <span class="correlation-avg" style="background:${colorForAvg(d.avg)}20;color:${colorForAvg(d.avg)}">${d.avg.toFixed(1)}</span>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// WEEKLY REVIEW
+// ============================================================
+document.getElementById('btn-weekly-review').addEventListener('click', () => {
+  document.getElementById('review-overlay').classList.add('open');
+  initWeeklyReview();
+});
+
+function initWeeklyReview() {
+  // Reset to step 0
+  document.querySelectorAll('.review-step').forEach(s => s.classList.remove('active'));
+  document.querySelector('.review-step[data-rstep="0"]').classList.add('active');
+
+  // Populate active cycles
+  const activeCycles = DB.getActiveCycles();
+  const container = document.getElementById('review-active-cycles');
+  if (activeCycles.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-dim);font-size:0.9rem">No active experiments this week.</p>';
+  } else {
+    container.innerHTML = activeCycles.map(c => {
+      const last = c.iterations[c.iterations.length - 1];
+      return `
+        <div class="card" style="margin-bottom:8px">
+          <div style="font-weight:600;margin-bottom:4px">${c.title}</div>
+          <div style="font-size:0.85rem;color:var(--text-dim)">Experiment: ${last.experiment}</div>
+          ${last.result ? `<div style="font-size:0.85rem;margin-top:4px">Result: ${last.result}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  // Populate patterns summary
+  const logs = DB.getLogs();
+  const weekLogs = logs.filter(l => {
+    const d = new Date(l.date);
+    const now = new Date();
+    return (now - d) / (1000 * 60 * 60 * 24) <= 7;
+  });
+  const summary = document.getElementById('review-patterns-summary');
+  summary.innerHTML = `
+    <div class="stat-row"><span>Evenings logged this week</span><span class="stat-value">${weekLogs.length}</span></div>
+    <div class="stat-row"><span>Average energy</span><span class="stat-value">${weekLogs.length ? (weekLogs.reduce((s,l) => s+l.energy, 0) / weekLogs.length).toFixed(1) : '-'}</span></div>
+  `;
+
+  // Populate priorities
+  const allOpen = DB.getCycles().filter(c => c.status === 'open');
+  const priorities = document.getElementById('review-priorities');
+  if (allOpen.length === 0) {
+    priorities.innerHTML = '<p style="color:var(--text-dim);font-size:0.9rem">No open cycles. Create one if you noticed a pattern this week.</p>';
+  } else {
+    priorities.innerHTML = allOpen.map(c => `
+      <div class="correlation-item">
+        <span>${c.title}</span>
+        <label style="font-size:0.8rem;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" class="priority-check" data-cid="${c.id}" ${c.activeExperiment ? 'checked' : ''}>
+          Active
+        </label>
+      </div>
+    `).join('');
+  }
+}
+
+// Review navigation
+document.querySelectorAll('.review-next').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const current = btn.closest('.review-step');
+    const next = current.nextElementSibling;
+    if (next && next.classList.contains('review-step')) {
+      current.classList.remove('active');
+      next.classList.add('active');
+    }
+  });
+});
+
+document.getElementById('btn-finish-review').addEventListener('click', () => {
+  // Save priority selections
+  const cycles = DB.getCycles();
+  let activeCount = 0;
+  document.querySelectorAll('.priority-check').forEach(cb => {
+    const cycle = cycles.find(c => c.id === cb.dataset.cid);
+    if (cycle) {
+      if (cb.checked && activeCount < 2) {
+        cycle.activeExperiment = true;
+        activeCount++;
+      } else {
+        cycle.activeExperiment = false;
+      }
+    }
+  });
+  DB.saveCycles(cycles);
+  document.getElementById('review-overlay').classList.remove('open');
+});
+
+// ============================================================
+// CONTENT MODAL
+// ============================================================
+document.getElementById('btn-add-content').addEventListener('click', () => {
+  document.getElementById('content-modal').classList.add('open');
+});
+document.getElementById('btn-cancel-content').addEventListener('click', () => {
+  document.getElementById('content-modal').classList.remove('open');
+});
+
+// Content category chips (single select)
+document.querySelectorAll('#content-category .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#content-category .chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+  });
+});
+
+// Content energy chips (multi select)
+document.querySelectorAll('#content-energy .chip').forEach(chip => {
+  chip.addEventListener('click', () => chip.classList.toggle('selected'));
+});
+
+document.getElementById('btn-save-content').addEventListener('click', () => {
+  const title = document.getElementById('content-title').value.trim();
+  const catChip = document.querySelector('#content-category .chip.selected');
+  if (!title || !catChip) return;
+
+  const energyLevels = [...document.querySelectorAll('#content-energy .chip.selected')]
+    .map(c => parseInt(c.dataset.elv));
+
+  DB.addContent({
+    title,
+    category: catChip.dataset.cat,
+    energy_levels: energyLevels.length ? energyLevels : [1, 2, 3],
+    notes: document.getElementById('content-notes').value.trim()
+  });
+
+  // Clear and close
+  document.getElementById('content-title').value = '';
+  document.getElementById('content-notes').value = '';
+  document.querySelectorAll('#content-category .chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#content-energy .chip').forEach(c => c.classList.add('selected'));
+  document.getElementById('content-modal').classList.remove('open');
+});
+
+// ============================================================
+// AI INSIGHTS
+// ============================================================
+document.getElementById('btn-ai-insights').addEventListener('click', async () => {
+  const settings = DB.getSettings();
+  if (!settings.workerUrl) {
+    document.getElementById('ai-settings-modal').classList.add('open');
+    return;
+  }
+  await fetchAIInsights(settings.workerUrl);
+});
+
+document.getElementById('btn-cancel-ai').addEventListener('click', () => {
+  document.getElementById('ai-settings-modal').classList.remove('open');
+});
+document.getElementById('btn-save-ai').addEventListener('click', () => {
+  const url = document.getElementById('ai-worker-url').value.trim();
+  if (url) {
+    DB.saveSetting('workerUrl', url);
+    document.getElementById('ai-settings-modal').classList.remove('open');
+    fetchAIInsights(url);
+  }
+});
+
+async function fetchAIInsights(workerUrl) {
+  const area = document.getElementById('ai-result-area');
+  area.innerHTML = '<div class="ai-loading">Analyzing your patterns...</div>';
+
+  const logs = DB.getLogs().slice(-14); // last 2 weeks
+  const cycles = DB.getCycles();
+
+  try {
+    const res = await fetch(workerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logs, cycles })
+    });
+    if (!res.ok) throw new Error('Worker returned ' + res.status);
+    const data = await res.json();
+    area.innerHTML = `<div class="ai-result">${data.analysis || data.message || 'No insights returned.'}</div>`;
+  } catch (err) {
+    area.innerHTML = `<div class="ai-result" style="border-left-color:var(--energy1)">Could not reach AI service: ${err.message}. Check your Worker URL in settings.</div>`;
+  }
+}
+
+// ============================================================
+// DATA EXPORT / IMPORT
+// ============================================================
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([DB.exportAll()], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `evening-portal-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      DB.importAll(reader.result);
+      renderPatterns();
+      alert('Data imported successfully!');
+    } catch { alert('Invalid file format.'); }
+  };
+  reader.readAsText(file);
+});
+
+// ============================================================
+// FIRST-TIME SETUP
+// ============================================================
+async function checkSetup() {
+  if (!DB.isSetupDone()) {
+    document.getElementById('setup-overlay').classList.add('open');
+  }
+}
+
+document.getElementById('btn-setup-skip').addEventListener('click', () => {
+  DB.markSetupDone();
+  document.getElementById('setup-overlay').classList.remove('open');
+});
+
+document.getElementById('btn-setup-load').addEventListener('click', async () => {
+  try {
+    const res = await fetch('content.json');
+    const seed = await res.json();
+    seed.forEach(item => {
+      item.status = 'queued';
+      const existing = DB.getContent();
+      if (!existing.find(c => c.id === item.id)) {
+        existing.push(item);
+        DB.saveContent(existing);
+      }
+    });
+  } catch (e) {
+    // Seed file not available, that's fine
+  }
+  DB.markSetupDone();
+  document.getElementById('setup-overlay').classList.remove('open');
+});
+
+// ============================================================
+// SERVICE WORKER
+// ============================================================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// ============================================================
+// INIT
+// ============================================================
+checkSetup();
+initTonight();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "seed-1",
+    "title": "Pick any book from your scattered lists",
+    "category": "read",
+    "energy_levels": [1, 2, 3],
+    "notes": "Start by consolidating your reading list here"
+  },
+  {
+    "id": "seed-2",
+    "title": "Watch a short film (under 15 min)",
+    "category": "watch",
+    "energy_levels": [1, 2],
+    "notes": "Search: 'best short films' or Vimeo Staff Picks"
+  },
+  {
+    "id": "seed-3",
+    "title": "Write about: what does 'productive' mean to you?",
+    "category": "write",
+    "energy_levels": [1, 2, 3],
+    "notes": "Even 3 sentences counts"
+  },
+  {
+    "id": "seed-4",
+    "title": "Write about: describe a scene that stayed with you from a film or book",
+    "category": "write",
+    "energy_levels": [1, 2, 3],
+    "notes": ""
+  },
+  {
+    "id": "seed-5",
+    "title": "Browse Criterion Collection or MUBI for your next watch",
+    "category": "watch",
+    "energy_levels": [1],
+    "notes": "Browsing and bookmarking counts as a fallback activity"
+  }
+]
