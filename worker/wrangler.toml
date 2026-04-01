@@ -1,0 +1,13 @@
+name = "evening-portal-ai"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# Non-secret config goes here
+
+# Rate limiting uses KV
+# Create with: wrangler kv namespace create "RATE_LIMIT"
+# Then add the binding ID below:
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "your-kv-namespace-id"
