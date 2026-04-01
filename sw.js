@@ -1,5 +1,5 @@
 const CACHE_NAME = 'evening-portal-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json', '/content.json'];
+const ASSETS = ['./', './index.html', './manifest.json', './content.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
